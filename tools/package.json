@@ -1,0 +1,12 @@
+{
+  "name": "bandeirando-tools",
+  "private": true,
+  "type": "module",
+  "description": "Gera core/static/core/data/mundo.json (mapas) a partir do Natural Earth (world-atlas).",
+  "dependencies": {
+    "d3-geo": "^3.1.0",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2",
+    "world-countries": "^5.0.0"
+  }
+}
