@@ -1,0 +1,14 @@
+<li class="item-pais">
+  <img class="bandeira bandeira-sm" src="{{ p.pais.bandeira_url }}" alt="Bandeira de {{ p.pais.nome }}" loading="lazy">
+  <div class="flex-grow-1 min-w-0">
+    <div class="d-flex justify-content-between gap-2">
+      <strong class="text-truncate">{{ p.pais.nome }}</strong>
+      <span class="small fw-bold">{{ p.taxa }}%</span>
+    </div>
+    <div class="progress progress-fino my-1"><div class="progress-bar {{ cor }}" style="width: {{ p.taxa }}%"></div></div>
+    <div class="small d-flex gap-3">
+      <span class="text-success"><i class="bi bi-check-lg"></i> {{ p.acertos }}</span>
+      <span class="text-danger"><i class="bi bi-x-lg"></i> {{ p.erros }}</span>
+    </div>
+  </div>
+</li>

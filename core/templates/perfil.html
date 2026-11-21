@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block titulo %}Meu perfil{% endblock %}
+{% block conteudo %}
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="cartao p-4 text-center">
+      <div class="avatar-grande mb-3">{{ meu.avatar }}</div>
+      <h1 class="h4 mb-0">{{ user.get_full_name|default:user.username }}</h1>
+      <div class="text-body-secondary mb-3">@{{ user.username }}</div>
+      <span class="badge rounded-pill text-bg-warning fs-6 mb-2">Nível {{ meu.nivel.numero }}: {{ meu.nivel.titulo }}</span>
+      {% if meu.nivel.proximo %}
+        <div class="progress my-2" style="height: 10px"><div class="progress-bar" style="width: {{ meu.nivel.percentual }}%"></div></div>
+        <div class="small text-body-secondary">Faltam {{ meu.nivel.faltam }} pontos para {{ meu.nivel.proximo }}</div>
+      {% else %}
+        <div class="small text-body-secondary">Você chegou ao nível máximo!</div>
+      {% endif %}
+      <hr>
+      <div class="row g-2 text-center">
+        <div class="col-6"><div class="titulo fs-3">{{ meu.pontos }}</div><div class="small text-body-secondary">pontos</div></div>
+        <div class="col-6"><div class="titulo fs-3">{{ meu.streak }}</div><div class="small text-body-secondary">dias seguidos</div></div>
+        <div class="col-6"><div class="titulo fs-3">{{ aprendidos }}<span class="fs-6 text-body-secondary">/{{ total_paises }}</span></div><div class="small text-body-secondary">aprendidos</div></div>
+        <div class="col-6"><div class="titulo fs-3">{{ partidas }}</div><div class="small text-body-secondary">partidas</div></div>
+        <div class="col-6"><div class="titulo fs-3">{{ meu.melhor_sequencia_acertos }}</div><div class="small text-body-secondary">maior combo</div></div>
+        <div class="col-6"><div class="titulo fs-3">{{ meu.recorde_sobrevivencia }}</div><div class="small text-body-secondary">recorde sobrevivência</div></div>
+      </div>
+      <a href="{% url 'painel' %}" class="btn btn-primary w-100 mt-3"><i class="bi bi-bar-chart-line me-1"></i>Ver meu painel</a>
+      <div class="small text-body-secondary mt-3">Membro desde {{ user.date_joined|date:"d/m/Y" }}</div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="cartao p-4">
+      <h2 class="h4 mb-3">Editar perfil</h2>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="mb-3">
+          <span class="form-label fw-bold d-block">Avatar</span>
+          <div class="d-flex flex-wrap gap-2">
+            {% for radio in form.avatar %}
+              <div>{{ radio.tag }}<label class="avatar-op" for="{{ radio.id_for_label }}" title="Escolher este avatar">{{ radio.choice_label }}</label></div>
+            {% endfor %}
+          </div>
+          {% for erro in form.avatar.errors %}<div class="text-danger small mt-1">{{ erro }}</div>{% endfor %}
+        </div>
+        <div class="row">
+          <div class="col-md-6">{% include "includes/_campo.html" with campo=form.first_name %}</div>
+          <div class="col-md-6">{% include "includes/_campo.html" with campo=form.last_name %}</div>
+        </div>
+        {% include "includes/_campo.html" with campo=form.email %}
+        <div class="d-flex flex-wrap gap-2">
+          <button type="submit" class="btn btn-primary btn-lg">Salvar alterações</button>
+          <a href="{% url 'senha' %}" class="btn btn-outline-secondary btn-lg"><i class="bi bi-key me-1"></i>Alterar senha</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

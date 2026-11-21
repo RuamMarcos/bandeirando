@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}Aprender bandeiras{% endblock %}
+{% block conteudo %}
+<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+  <div>
+    <h1 class="h2 mb-1">Aprender bandeiras</h1>
+    <p class="text-body-secondary mb-0">Escolha uma ou mais regiões, estude em grade ou em slides e teste-se com o modo estudo.</p>
+  </div>
+  <a href="{% url 'quiz' %}" class="btn btn-primary"><i class="bi bi-lightning-charge me-1"></i>Ir para o quiz</a>
+</div>
+
+<div class="cartao p-3 mb-4">
+  <div class="row g-3 align-items-center">
+    <div class="col-lg-4">
+      <div class="input-group">
+        <span class="input-group-text bg-transparent"><i class="bi bi-search"></i></span>
+        <input type="search" id="busca" class="form-control" placeholder="Buscar país ou capital" autocomplete="off" aria-label="Buscar país ou capital">
+      </div>
+    </div>
+    <div class="col-lg-8">
+      <div class="d-flex flex-wrap gap-2" role="group" aria-label="Filtrar por região (pode escolher várias)">
+        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill chip active" data-filtro-continente="" aria-pressed="true">Todos</button>
+        {% for c in continentes %}
+          <button type="button" class="btn btn-sm btn-outline-primary rounded-pill chip" data-filtro-continente="{{ c.chave }}" aria-pressed="false">{{ c.emoji }} {{ c.rotulo }}</button>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <hr class="my-3">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" role="switch" id="modo-slides">
+        <label class="form-check-label fw-semibold" for="modo-slides">Modo slides</label>
+      </div>
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" role="switch" id="modo-estudo">
+        <label class="form-check-label fw-semibold" for="modo-estudo">Modo estudo (esconde os nomes)</label>
+      </div>
+      <span id="acoes-grade" class="d-inline-flex gap-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-embaralhar"><i class="bi bi-shuffle me-1"></i>Embaralhar</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="btn-ordenar"><i class="bi bi-sort-alpha-down me-1"></i>Ordem alfabética</button>
+      </span>
+    </div>
+    <div class="text-body-secondary">Mostrando <strong id="contador">{{ paises|length }}</strong> de {{ paises|length }}</div>
+  </div>
+  {% if user.is_authenticated %}
+    <div class="small text-body-secondary mt-3">
+      <span class="me-3"><span class="badge rounded-pill" style="background: var(--ok)"><i class="bi bi-check-lg"></i></span> Aprendido</span>
+      <span><span class="badge rounded-pill" style="background: var(--ouro); color: #33290f"><i class="bi bi-hourglass-split"></i></span> Em treino</span>
+    </div>
+  {% endif %}
+</div>
+
+<section id="modo-slide" class="d-none" aria-label="Bandeiras em slides">
+  <div class="cartao p-3 p-md-4">
+    <div class="row g-4 align-items-center">
+      <div class="col-lg-7"><img id="slide-bandeira" class="bandeira slide-bandeira" alt=""></div>
+      <div class="col-lg-5" id="slide-info">
+        <svg id="slide-mapa" class="mapa-svg slide-mapa" role="img" aria-label="Mapa do país"></svg>
+        <div class="text-body-secondary fw-semibold mb-2" id="slide-contador" aria-live="polite"></div>
+        <div class="dados">
+          <h2 class="display-6 mb-3" id="slide-nome"></h2>
+          <dl class="row mb-0">
+            <dt class="col-5 text-body-secondary fw-semibold">Capital</dt><dd class="col-7 fw-bold" id="slide-capital"></dd>
+            <dt class="col-5 text-body-secondary fw-semibold">Região</dt><dd class="col-7" id="slide-regiao"></dd>
+            <dt class="col-5 text-body-secondary fw-semibold">Código</dt><dd class="col-7" id="slide-codigo"></dd>
+            {% if user.is_authenticated %}<dt class="col-5 text-body-secondary fw-semibold">Seu treino</dt><dd class="col-7" id="slide-treino"></dd>{% endif %}
+          </dl>
+        </div>
+        <button type="button" id="slide-revelar" class="btn btn-ouro mt-3 d-none">Mostrar resposta</button>
+      </div>
+    </div>
+    <hr>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <button type="button" class="btn btn-outline-primary btn-lg" id="slide-anterior"><i class="bi bi-chevron-left me-1"></i>Anterior</button>
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" role="switch" id="slide-aleatorio">
+        <label class="form-check-label fw-semibold" for="slide-aleatorio">Ordem aleatória</label>
+      </div>
+      <button type="button" class="btn btn-primary btn-lg" id="slide-proximo">Próxima<i class="bi bi-chevron-right ms-1"></i></button>
+    </div>
+    <div class="text-center small text-body-secondary mt-3">Use as setas do teclado para navegar.</div>
+  </div>
+</section>
+
+<div id="grade-paises" data-url-mapa="{% static 'core/data/mundo.json' %}" class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3">
+  {% for pais in paises %}
+    <div class="col pais-col" data-ordem="{{ pais.ordem }}" data-nome="{{ pais.nome }}" data-capital="{{ pais.capital }}"
+         data-continente="{{ pais.continente }}" data-regiao="{{ pais.rotulo_continente }}" data-codigo="{{ pais.codigo|upper }}"
+         data-flag="{{ pais.bandeira_url }}" data-acertos="{{ pais.prog.acertos|default:0 }}" data-erros="{{ pais.prog.erros|default:0 }}"
+         data-status="{{ pais.status }}">
+      <button type="button" class="card-pais">
+        {% if pais.status == "aprendido" %}<span class="selo" title="Aprendido"><i class="bi bi-check-lg"></i></span>
+        {% elif pais.status == "visto" %}<span class="selo visto" title="Em treino"><i class="bi bi-hourglass-split"></i></span>{% endif %}
+        <img class="bandeira" src="{{ pais.bandeira_url }}" alt="Bandeira de {{ pais.nome }}" loading="lazy" width="320" height="240">
+        <div class="info">
+          <div class="fw-bold lh-sm">{{ pais.nome }}</div>
+          <div class="small text-body-secondary">{{ pais.capital }}</div>
+        </div>
+      </button>
+    </div>
+  {% endfor %}
+</div>
+
+<div id="sem-resultados" class="vazio d-none">
+  <i class="bi bi-search"></i>
+  Nenhum país encontrado. Tente outro nome ou limpe o filtro de região.
+</div>
+
+<div class="modal fade" id="modal-pais" tabindex="-1" aria-labelledby="modal-nome" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h2 class="modal-title h4" id="modal-nome"></h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <img id="modal-bandeira" class="bandeira modal-bandeira mb-3" alt="">
+        <svg id="modal-mapa" class="mapa-svg modal-bandeira mb-3" role="img" aria-label="Mapa do país"></svg>
+        <dl class="row mb-0">
+          <dt class="col-5 col-sm-4 text-body-secondary fw-semibold">Capital</dt><dd class="col-7 col-sm-8 fw-bold" id="modal-capital"></dd>
+          <dt class="col-5 col-sm-4 text-body-secondary fw-semibold">Região</dt><dd class="col-7 col-sm-8" id="modal-regiao"></dd>
+          <dt class="col-5 col-sm-4 text-body-secondary fw-semibold">Código</dt><dd class="col-7 col-sm-8" id="modal-codigo"></dd>
+          {% if user.is_authenticated %}
+          <dt class="col-5 col-sm-4 text-body-secondary fw-semibold">Seu treino</dt>
+          <dd class="col-7 col-sm-8" id="modal-treino"></dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="{% static 'core/js/mapa.js' %}"></script>
+<script src="{% static 'core/js/aprender.js' %}"></script>
+{% endblock %}

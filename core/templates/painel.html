@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}Meu painel{% endblock %}
+{% block conteudo %}
+<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+  <div>
+    <h1 class="h2 mb-1">Olá, {{ user.first_name|default:user.username }}!</h1>
+    <p class="text-body-secondary mb-0">
+      {% if perfil.praticou_hoje %}Você já treinou hoje. Sua sequência está garantida.
+      {% elif perfil.streak %}Treine hoje para manter sua sequência de {{ perfil.streak }} dia{{ perfil.streak|pluralize }}.
+      {% else %}Comece hoje uma nova sequência de treinos.{% endif %}
+    </p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'quiz' %}" class="btn btn-primary"><i class="bi bi-lightning-charge me-1"></i>Jogar agora</a>
+    {% if reforco %}<a href="{% url 'quiz' %}?foco=1&tipo={{ tipo }}" class="btn btn-outline-primary"><i class="bi bi-bullseye me-1"></i>Treinar meus erros</a>{% endif %}
+  </div>
+</div>
+
+<ul class="nav nav-pills gap-1 mb-3" aria-label="Modalidade">
+  {% for chave, rotulo in tipos %}
+    <li class="nav-item"><a class="nav-link {% if chave == tipo %}active{% endif %}" href="?tipo={{ chave }}">
+      {% if chave == "bandeira" %}<i class="bi bi-flag me-1"></i>{% elif chave == "mapa" %}<i class="bi bi-globe-americas me-1"></i>{% else %}<i class="bi bi-building me-1"></i>{% endif %}{{ rotulo }}</a></li>
+  {% endfor %}
+</ul>
+
+<div class="faixa mb-4">
+  <div>
+    <div class="text-body-secondary fw-semibold mb-1"><i class="bi bi-star-fill me-1" style="color: var(--ouro-escuro)"></i>Pontos</div>
+    <div class="numero">{{ perfil.pontos }}</div>
+    <div class="small text-body-secondary mt-1">Nível {{ perfil.nivel.numero }}: {{ perfil.nivel.titulo }}</div>
+  </div>
+  <div>
+    <div class="text-body-secondary fw-semibold mb-1"><i class="bi bi-fire me-1" style="color: var(--fogo)"></i>Sequência</div>
+    <div class="numero">{{ perfil.streak }} <span class="fs-6 fw-semibold text-body-secondary">dia{{ perfil.streak|pluralize }}</span></div>
+    <div class="small text-body-secondary mt-1">Recorde: {{ perfil.melhor_sequencia_dias }} dia{{ perfil.melhor_sequencia_dias|pluralize }}</div>
+  </div>
+  <div>
+    <div class="text-body-secondary fw-semibold mb-1"><i class="bi bi-patch-check-fill me-1 text-success"></i>Domínio: {{ rotulo_tipo }}</div>
+    <div class="numero">{{ aprendidos }}<span class="fs-6 fw-semibold text-body-secondary"> / {{ total_paises }}</span></div>
+    <div class="progress progress-fino mt-2"><div class="progress-bar bg-success" style="width: {{ pct_aprendidos }}%"></div></div>
+  </div>
+  <div>
+    <div class="text-body-secondary fw-semibold mb-1"><i class="bi bi-bullseye me-1 text-primary"></i>Aproveitamento</div>
+    <div class="numero">{{ perfil.taxa_acerto }}%</div>
+    <div class="small text-body-secondary mt-1">{{ perfil.acertos }} acerto{{ perfil.acertos|pluralize }} e {{ perfil.erros }} erro{{ perfil.erros|pluralize }}</div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-8">
+    <div class="cartao p-3 p-md-4 h-100">
+      <h2 class="cartao-titulo">Pontos nos últimos 14 dias</h2>
+      <div style="height: 240px"><canvas id="grafico-pontos" aria-label="Gráfico de pontos por dia" role="img"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="cartao p-3 p-md-4 h-100">
+      <h2 class="cartao-titulo">Sua semana</h2>
+      <div class="semana mb-3">
+        {% for d in semana %}
+          <div class="dia {% if d.ativo %}ativo{% endif %} {% if d.hoje %}hoje{% endif %}">
+            <span class="bola"><i class="bi bi-check-lg"></i></span>{{ d.letra }}
+          </div>
+        {% endfor %}
+      </div>
+      <hr>
+      <div class="d-flex justify-content-between mb-1"><span class="text-body-secondary">Países vistos</span><strong>{{ vistos }}</strong></div>
+      <div class="d-flex justify-content-between mb-1"><span class="text-body-secondary">Ainda não vistos</span><strong>{{ nao_vistos }}</strong></div>
+      <div class="d-flex justify-content-between mb-1"><span class="text-body-secondary">Partidas jogadas</span><strong>{{ partidas_total }}</strong></div>
+      <div class="d-flex justify-content-between mb-1"><span class="text-body-secondary">Maior combo</span><strong>{{ perfil.melhor_sequencia_acertos }}</strong></div>
+      <div class="d-flex justify-content-between"><span class="text-body-secondary">Recorde na sobrevivência</span><strong>{{ perfil.recorde_sobrevivencia }}</strong></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="cartao p-3 p-md-4 h-100">
+      <h2 class="cartao-titulo"><i class="bi bi-hand-thumbs-up me-2 text-success"></i>{{ rotulo_tipo }} que você mais acerta</h2>
+      {% if mais_acertos %}
+        <ul class="lista-paises">{% for p in mais_acertos %}{% include "includes/_item_pais.html" with cor="bg-success" %}{% endfor %}</ul>
+      {% else %}
+        <div class="vazio"><i class="bi bi-flag"></i>Jogue um quiz para ver seus melhores países aqui.</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="cartao p-3 p-md-4 h-100">
+      <h2 class="cartao-titulo"><i class="bi bi-exclamation-circle me-2 text-danger"></i>{{ rotulo_tipo }} que precisam de reforço</h2>
+      {% if reforco %}
+        <ul class="lista-paises">{% for p in reforco %}{% include "includes/_item_pais.html" with cor="bg-danger" %}{% endfor %}</ul>
+      {% else %}
+        <div class="vazio"><i class="bi bi-emoji-smile"></i>Nenhum erro por enquanto. Continue assim!</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="cartao p-3 p-md-4 mb-4">
+  <h2 class="cartao-titulo cabecalho-mapa">Domínio por modalidade</h2>
+  <div class="row g-4">
+    {% for d in dominio %}
+      <div class="col-md-4">
+        <div class="d-flex justify-content-between mb-1"><span class="fw-semibold">{{ d.rotulo }}</span><span class="text-body-secondary">{{ d.aprendidos }} de {{ total_paises }}</span></div>
+        <div class="progress" style="height: 10px"><div class="progress-bar" style="width: {{ d.pct }}%"></div></div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="cartao p-3 p-md-4 h-100">
+      <h2 class="cartao-titulo">Progresso por região</h2>
+      {% for c in por_continente %}
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1"><span class="fw-semibold">{{ c.emoji }} {{ c.rotulo }}</span><span class="text-body-secondary">{{ c.aprendidos }} de {{ c.total }}</span></div>
+          <div class="progress" style="height: 10px"><div class="progress-bar" style="width: {{ c.pct }}%"></div></div>
+        </div>
+      {% endfor %}
+      <a href="{% url 'aprender' %}" class="btn btn-sm btn-outline-primary mt-1">Estudar bandeiras</a>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="cartao p-3 p-md-4 h-100">
+      <h2 class="cartao-titulo">Últimas partidas</h2>
+      {% if partidas %}
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead><tr><th>Quando</th><th>Região</th><th class="text-end">Acertos</th><th class="text-end">Pontos</th></tr></thead>
+            <tbody>
+              {% for p in partidas %}
+                <tr>
+                  <td class="text-nowrap">{{ p.criada_em|date:"d/m H:i" }}</td>
+                  <td>{{ p.rotulo_continente }}{% if p.sobrevivencia %} <span class="badge text-bg-warning">sobrevivência</span>{% endif %}</td>
+                  <td class="text-end text-nowrap">{% if p.sobrevivencia %}{{ p.acertos }} acerto{{ p.acertos|pluralize }}{% else %}{{ p.acertos }}/{{ p.total }}{% endif %}{% if not p.finalizada %} <i class="bi bi-hourglass-split text-body-secondary" title="Partida incompleta"></i>{% endif %}</td>
+                  <td class="text-end fw-bold">{{ p.pontos }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="vazio"><i class="bi bi-controller"></i>Suas partidas aparecerão aqui.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{{ grafico|json_script:"dados-grafico" }}
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="{% static 'core/js/painel.js' %}"></script>
+{% endblock %}

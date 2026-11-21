@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}Quiz{% endblock %}
+{% block conteudo %}
+<div id="quiz-app" class="mx-auto" style="max-width: 820px"
+     data-url-iniciar="{% url 'api_iniciar' %}" data-url-pergunta="{% url 'api_pergunta' %}" data-url-responder="{% url 'api_responder' %}"
+     data-url-mapa="{% static 'core/data/mundo.json' %}">
+  <div class="text-end mb-2">
+    <button type="button" class="btn-som" id="btn-som" aria-label="Ligar ou desligar o som"><i class="bi bi-volume-up-fill"></i></button>
+  </div>
+  <div id="alerta-quiz"></div>
+
+  <!-- Configuração -->
+  <section id="tela-config" class="cartao p-4 p-md-5">
+    <h1 class="h2 mb-1">Vamos treinar?</h1>
+    <p class="text-body-secondary mb-4">Escolha o modo, a região e comece.</p>
+
+    {% if em_andamento %}
+      <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <span>Você tem uma partida {% if em_andamento_sobrevivencia %}de sobrevivência{% endif %} em andamento.</span>
+        <button type="button" class="btn btn-sm btn-primary" id="btn-continuar">Continuar partida</button>
+      </div>
+    {% endif %}
+
+    <h2 class="h6 fw-bold mb-2">O que treinar?</h2>
+    <div class="row g-2 mb-4" role="radiogroup" aria-label="O que treinar">
+      <div class="col-6 col-md-3">
+        <input type="radio" class="btn-check" name="tipo" id="t-bandeira" value="bandeira" {% if tipo_inicial == "bandeira" %}checked{% endif %}>
+        <label class="modo-opcao" for="t-bandeira"><i class="bi bi-flag"></i><strong>Bandeira</strong><span>Veja a bandeira e escolha o país.</span></label>
+      </div>
+      <div class="col-6 col-md-3">
+        <input type="radio" class="btn-check" name="tipo" id="t-mapa" value="mapa" {% if tipo_inicial == "mapa" %}checked{% endif %}>
+        <label class="modo-opcao" for="t-mapa"><i class="bi bi-globe-americas"></i><strong>Mapa</strong><span>Veja o país no mapa e escolha o nome.</span></label>
+      </div>
+      <div class="col-6 col-md-3">
+        <input type="radio" class="btn-check" name="tipo" id="t-mapa-bandeira" value="mapa-bandeira" {% if tipo_inicial == "mapa-bandeira" %}checked{% endif %}>
+        <label class="modo-opcao" for="t-mapa-bandeira"><i class="bi bi-signpost-split"></i><strong>Mapa e bandeira</strong><span>Veja o mapa e escolha a bandeira certa.</span></label>
+      </div>
+      <div class="col-6 col-md-3">
+        <input type="radio" class="btn-check" name="tipo" id="t-capital" value="capital" {% if tipo_inicial == "capital" %}checked{% endif %}>
+        <label class="modo-opcao" for="t-capital"><i class="bi bi-building"></i><strong>Capital</strong><span>Veja a bandeira e o nome e escolha a capital.</span></label>
+      </div>
+    </div>
+
+    <h2 class="h6 fw-bold mb-2">Modo de jogo</h2>
+    <div class="row g-2 mb-4" role="radiogroup" aria-label="Modo de jogo">
+      <div class="col-sm-6">
+        <input type="radio" class="btn-check" name="modo" id="m-classico" value="classico" checked>
+        <label class="modo-opcao" for="m-classico"><i class="bi bi-list-check"></i><strong>Clássico</strong>
+          <span>10, 20 ou 30 bandeiras. Acertos rápidos e em sequência rendem mais pontos.</span></label>
+      </div>
+      <div class="col-sm-6">
+        <input type="radio" class="btn-check" name="modo" id="m-sobrevivencia" value="sobrevivencia">
+        <label class="modo-opcao" for="m-sobrevivencia"><i class="bi bi-heart-pulse"></i><strong>Sobrevivência</strong>
+          <span>Sem fim. 3 vidas e um tempo por bandeira que vai diminuindo. Zerou o tempo, perdeu.
+            {% if recorde %}<b>Seu recorde: {{ recorde }}.</b>{% endif %}</span></label>
+      </div>
+    </div>
+
+    <h2 class="h6 fw-bold mb-2">Região</h2>
+    <div class="d-flex flex-wrap gap-2 mb-4" role="radiogroup" aria-label="Região">
+      <input type="radio" class="btn-check" name="continente" id="c-todos" value="" checked>
+      <label class="btn btn-outline-primary rounded-pill" for="c-todos">🌐 Mundo todo ({{ total_paises }})</label>
+      {% for c in continentes %}
+        <input type="radio" class="btn-check" name="continente" id="c-{{ c.chave }}" value="{{ c.chave }}">
+        <label class="btn btn-outline-primary rounded-pill" for="c-{{ c.chave }}">{{ c.emoji }} {{ c.rotulo }} ({{ c.total }})</label>
+      {% endfor %}
+    </div>
+
+    <div id="bloco-quantidade">
+      <h2 class="h6 fw-bold mb-2">Quantas bandeiras?</h2>
+      <div class="d-flex flex-wrap gap-2 mb-4" role="radiogroup" aria-label="Quantidade de perguntas">
+        <input type="radio" class="btn-check" name="quantidade" id="q10" value="10" checked><label class="btn btn-outline-primary rounded-pill px-4" for="q10">10</label>
+        <input type="radio" class="btn-check" name="quantidade" id="q20" value="20"><label class="btn btn-outline-primary rounded-pill px-4" for="q20">20</label>
+        <input type="radio" class="btn-check" name="quantidade" id="q30" value="30"><label class="btn btn-outline-primary rounded-pill px-4" for="q30">30</label>
+      </div>
+    </div>
+
+    <div class="form-check form-switch mb-4">
+      <input class="form-check-input" type="checkbox" role="switch" id="foco" {% if foco_inicial %}checked{% endif %}>
+      <label class="form-check-label" for="foco"><strong>Priorizar meus pontos fracos.</strong>
+        <span class="d-block small text-body-secondary">Países que você erra mais e os que ainda não viu aparecem com mais frequência.</span></label>
+    </div>
+
+    <button type="button" id="btn-comecar" class="btn btn-primary btn-lg w-100">Começar</button>
+  </section>
+
+  <!-- Jogo -->
+  <section id="tela-jogo" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
+      <span class="fw-bold" id="rotulo-progresso">Pergunta 1 de 10</span>
+      <div class="d-flex align-items-center gap-2">
+        <span class="vidas d-none" id="hud-vidas" title="Vidas" aria-label="Vidas restantes"></span>
+        <span class="pilula" title="Pontos da partida"><i class="bi bi-star-fill"></i><span id="hud-pontos">0</span></span>
+      </div>
+    </div>
+    <div class="progress mb-3" id="wrap-progresso" style="height: 10px" role="progressbar" aria-label="Progresso da partida">
+      <div id="barra-progresso" class="progress-bar" style="width: 0%"></div>
+    </div>
+    <div class="cartao p-3 p-md-4 text-center">
+      <div class="guia" id="guia">
+        {% include "includes/_mascote.html" with humor="neutro" %}
+        <div class="fala" id="fala">Vamos lá!</div>
+      </div>
+      <div class="moldura-bandeira mb-3" id="moldura">
+        <div class="combo d-none" id="combo" aria-live="polite"></div>
+        <img id="bandeira" alt="Bandeira a ser identificada">
+        <svg id="mapa-svg" class="mapa-svg d-none" role="img" aria-label="Mapa do país a ser identificado"></svg>
+      </div>
+      <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
+        <div class="barra-tempo flex-grow-1" id="trilho-tempo" aria-hidden="true"><div id="barra-tempo"></div></div>
+        <span class="tempo-num d-none" id="tempo-num"></span>
+      </div>
+      <div id="pergunta-nome" class="pergunta-nome mb-1 d-none"></div>
+      <p class="fw-bold mb-3" id="pergunta-texto">De qual país é esta bandeira?</p>
+      <div id="opcoes" class="row g-2 mb-3"></div>
+      <div id="feedback" class="feedback d-none" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- Resultado -->
+  <section id="tela-fim" class="cartao p-4 p-md-5 text-center d-none">
+    <div class="mx-auto mb-2" style="width: 96px" id="fim-mascote">{% include "includes/_mascote.html" with humor="feliz" %}</div>
+    <div id="fim-classico"><div class="anel mb-3" id="fim-anel"><div id="fim-percentual">0%</div></div></div>
+    <div id="fim-sobrev" class="d-none mb-2"><div class="fim-grande" id="fim-grande">0</div><div class="text-body-secondary fw-semibold">acertos na sobrevivência</div></div>
+    <h1 class="h3 mt-2" id="fim-titulo">Fim de jogo!</h1>
+    <p class="text-body-secondary" id="fim-texto"></p>
+    <div class="row g-3 my-4">
+      <div class="col-4"><div class="titulo fs-2" id="fim-acertos">0</div><div class="small text-body-secondary" id="fim-rotulo-acertos">acertos</div></div>
+      <div class="col-4"><div class="titulo fs-2" id="fim-pontos">0</div><div class="small text-body-secondary">pontos</div></div>
+      <div class="col-4"><div class="titulo fs-2" id="fim-sequencia">0</div><div class="small text-body-secondary">maior combo</div></div>
+    </div>
+    <div class="d-flex flex-wrap justify-content-center gap-2">
+      <button type="button" class="btn btn-primary btn-lg" id="btn-jogar-de-novo">Jogar de novo</button>
+      <a href="{% url 'painel' %}" class="btn btn-outline-primary btn-lg">Ver meu painel</a>
+      <a href="{% url 'aprender' %}" class="btn btn-outline-secondary btn-lg">Estudar bandeiras</a>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="{% static 'core/js/mapa.js' %}"></script>
+<script src="{% static 'core/js/quiz.js' %}"></script>
+{% endblock %}

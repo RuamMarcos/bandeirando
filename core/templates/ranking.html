@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block titulo %}Ranking{% endblock %}
+{% block conteudo %}
+<div class="mx-auto" style="max-width: 760px">
+  <h1 class="h2 mb-1">Ranking</h1>
+  <p class="text-body-secondary mb-4">Os 20 jogadores com mais pontos.
+    {% if posicao %}Você está em <strong>{{ posicao }}º lugar</strong> com {{ meu_perfil.pontos }} pontos.
+    {% else %}Jogue um quiz para entrar na lista.{% endif %}</p>
+  <div class="cartao">
+    {% if perfis %}
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead><tr><th class="ps-3" style="width: 4rem">#</th><th>Jogador</th><th class="text-end">Sequência</th><th class="text-end pe-3">Pontos</th></tr></thead>
+          <tbody>
+            {% for p in perfis %}
+              <tr class="{% if p.usuario_id == user.id %}linha-eu{% endif %}">
+                <td class="ps-3 fw-bold">{% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}{% endif %}</td>
+                <td><span class="me-2 fs-5">{{ p.avatar }}</span>{{ p.usuario.username }}{% if p.usuario_id == user.id %} <span class="badge text-bg-primary">você</span>{% endif %}</td>
+                <td class="text-end"><i class="bi bi-fire" style="color: var(--fogo)"></i> {{ p.streak }}</td>
+                <td class="text-end pe-3 fw-bold">{{ p.pontos }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="vazio"><i class="bi bi-trophy"></i>Ninguém pontuou ainda. Seja o primeiro!<br>
+        <a href="{% url 'quiz' %}" class="btn btn-primary mt-3">Jogar agora</a></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

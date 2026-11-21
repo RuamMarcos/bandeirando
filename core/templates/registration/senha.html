@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block titulo %}Alterar senha{% endblock %}
+{% block conteudo %}
+<div class="caixa-acesso">
+  <div class="cartao p-4 p-md-5">
+    <h1 class="h3 mb-4">Alterar senha</h1>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% include "includes/_campo.html" with campo=form.old_password %}
+      {% include "includes/_campo.html" with campo=form.new_password1 %}
+      {% include "includes/_campo.html" with campo=form.new_password2 %}
+      <div class="d-flex gap-2 mt-2">
+        <button type="submit" class="btn btn-primary btn-lg flex-grow-1">Salvar senha</button>
+        <a href="{% url 'perfil' %}" class="btn btn-outline-secondary btn-lg">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
