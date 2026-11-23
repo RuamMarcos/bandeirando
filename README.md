@@ -2,6 +2,7 @@
 
 Site em Django para aprender e treinar as bandeiras dos 195 países atuais (193 da ONU + Vaticano + Palestina). Tudo em português - Brasil.
 
+<img width="1000" height="600" alt="Untitled" src="https://github.com/user-attachments/assets/d81e6709-7ef4-4c15-923c-5c902413bcf3" />
 <br>
 
 # 2. Como roda a Aplicação
@@ -37,3 +38,11 @@ python manage.py test
 - *Pontuação:* +10 por acerto, +5 de rapidez (menos de 10s) e até +5 por combo.
 - *Streak:* Sistema de ofensiva, acumula por dias seguidos. (zera se ficar um dia inteiro sem jogar, sistema que incentiva a consistência).
 - *País aprendido:* Um país é considerado aprendido se tiver 3 ou mais acertos com 70% ou mais de aproveitamento. 
+- *Painel:* Painel presente no perfil do usuário, com pontos, streak, países aprendidos, aproveitamento, gráfico dos últimos 14 dias, semana ativa, países que mais acerta, países que precisa de reforço, progresso por região, recorde de sobrevivência e últimas partidas.
+- *Elementos Básicos:* Login; Perfil; Cadastro e Logout; Tema Claro e Escuro; Layout responsivo.
+
+
+
+---
+
+Espero que aprenda e divirta-se com minha aplicação!! 
